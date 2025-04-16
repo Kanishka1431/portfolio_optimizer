@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Optimized Portfolio</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary: #3498db;
+      --primary-hover: #2980b9;
+      --bg-light: #f5f8fa;
+      --bg-dark: #1e1e2f;
+      --card-light: #ecf0f1;
+      --card-dark: #2e2e3e;
+      --text-light: #333;
+      --text-dark: #f0f0f0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-light);
+      padding: 40px 20px;
+      margin: auto;
+      max-width: 1000px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body.dark {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    h2 {
+      color: #2c3e50;
+      border-bottom: 2px solid #2980b9;
+      padding-bottom: 10px;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      margin: 30px 0;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      background: var(--card-light);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      flex: 1;
+      min-width: 200px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.06);
+      transition: background-color 0.3s;
+    }
+
+    body.dark .stat-card {
+      background-color: var(--card-dark);
+    }
+
+    .stat-card h3 {
+      margin: 5px 0;
+      font-size: 18px;
+      color: var(--primary);
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: var(--card-light);
+      margin-bottom: 14px;
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 15px;
+      transition: background-color 0.3s;
+    }
+
+    body.dark li {
+      background: var(--card-dark);
+    }
+
+    .risk-tooltip {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #555;
+      opacity: 0.85;
+    }
+
+    body.dark .risk-tooltip {
+      color: #bbb;
+    }
+
+    .allocation-bar {
+      height: 6px;
+      background: var(--primary);
+      margin-top: 6px;
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+
+    .risk-bar {
+        height: 6px;
+        border-radius: 4px;
+        background-color: #e74c3c; /* base color for risk */
+        transition: width 0.3s;
+        margin-top: 6px;
+      }
+      
+      .risk-bar.low {
+        width: 30%;
+        background-color: #2ecc71; /* green for low risk */
+      }
+      
+      .risk-bar.medium {
+        width: 60%;
+        background-color: #f1c40f; /* yellow for medium risk */
+      }
+      
+      .risk-bar.high {
+        width: 90%;
+        background-color: #e74c3c; /* red for high risk */
+      }
+      
+
+    canvas {
+      margin-top: 40px;
+      background: white;
+      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 8px;
+      width: 100%;
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 40px;
+      flex-wrap: wrap;
+    }
+
+    .button-group form {
+      flex: 1;
+    }
+
+    .button-group button,
+    .toggle-theme {
+      width: 100%;
+      padding: 12px 16px;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .button-group button:hover,
+    .toggle-theme:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .toggle-theme {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background-color: var(--card-light);
+        border: none;
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.3s ease;
+        box-shadow: 0 0 8px rgba(0,0,0,0.08);
+      }
+
+      body.dark .toggle-theme {
+        box-shadow: 0 0 10px rgba(52, 152, 219, 0.4);
+      }
+      
+      
+
+    .toggle-theme svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .toggle-theme:hover {
+        transform: scale(1.05);
+      }
+      
+      #theme-icon {
+        width: 24px;
+        height: 24px;
+        stroke: var(--primary);
+        transition: stroke 0.3s ease;
+      }
+    @media (max-width: 768px) {
+      .stats {
+        flex-direction: column;
+        align-items: center;
+      }
+      .button-group {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+    <button class="toggle-theme" onclick="toggleTheme()" title="Toggle Dark Mode">
+        <svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor">
+          <path id="theme-icon-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 3v1m0 16v1m8.66-10H20m-16 0H3m15.364 6.364l-.707.707M6.343 6.343l-.707.707
+                   m12.728 0l.707.707M6.343 17.657l.707.707M12 5a7 7 0 100 14 7 7 0 000-14z" />
+        </svg>
+      </button>
+      
+
+  <h2>Optimized Portfolio</h2>
+
+  <div class="stats">
+    <div class="stat-card">
+      <h3>Estimated Return</h3>
+      <p>{{ result.expected_return }}</p>
+    </div>
+    <div class="stat-card">
+      <h3>Volatility</h3>
+      <p>{{ result.volatility }}</p>
+    </div>
+    <div class="stat-card">
+      <h3>Sharpe Ratio</h3>
+      <p>{{ result.sharpe_ratio }}</p>
+    </div>
+  </div>
+
+  <h3>Recommended Investment Allocation:</h3>
+  <ul>
+    {% for stock, data in result.weights.items %}
+    <li>
+      <strong>{{ stock }}</strong>: {{ data.weight }}%
+      (Risk: {{ data.risk }}%,
+      Level:
+      <span class="{% if data.risk_level == 'Low' %}low-risk{% elif data.risk_level == 'Medium' %}medium-risk{% else %}high-risk{% endif %}">
+        {{ data.risk_level }}
+      </span>)
+      
+      <div class="allocation-bar risk-bar {% if data.risk_level == 'Low' %}low{% elif data.risk_level == 'Medium' %}medium{% else %}high{% endif %}"></div>
+
+
+      
+
+      <div class="risk-tooltip"><em>{{ data.insight }}</em></div>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <h3>Stock Price Chart</h3>
+  <canvas id="stockChart" height="300"></canvas>
+
+  <div class="button-group">
+    <form method="post" action="{% url 'generate_pdf' %}">
+      {% csrf_token %}
+      <input type="hidden" name="chart_image" id="chartImageInput">
+      <button type="submit">Download PDF Report</button>
+    </form>
+
+    <form action="{% url 'home' %}" method="get">
+      <button type="submit">Back to Home</button>
+    </form>
+  </div>
+
+  <script>
+    const priceData = {{ price_data|safe }};
+    const labels = Object.keys(priceData[Object.keys(priceData)[0]]);
+    const datasets = Object.entries(priceData).map(([ticker, prices], index) => ({
+      label: ticker,
+      data: Object.values(prices),
+      borderColor: `hsl(${index * 80}, 70%, 50%)`,
+      fill: false,
+      tension: 0.3
+    }));
+
+    const ctx = document.getElementById('stockChart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: datasets
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          title: {
+            display: true,
+            text: 'Simulated Stock Prices'
+          }
+        },
+        scales: {
+          x: {
+            ticks: {
+              maxTicksLimit: 10,
+              autoSkip: true
+            }
+          }
+        }
+      }
+    });
+
+    const pdfForm = document.querySelector('form[action="{% url "generate_pdf" %}"]');
+    pdfForm.addEventListener('submit', function () {
+      const canvas = document.getElementById('stockChart');
+      const imageData = canvas.toDataURL('image/png');
+      document.getElementById('chartImageInput').value = imageData;
+    });
+
+    function toggleTheme() {
+        const body = document.body;
+        const path = document.getElementById('theme-icon-path');
+      
+        const isDark = body.classList.toggle('dark');
+      
+        // Update icon path only (no innerHTML swaps)
+        path.setAttribute('d', isDark
+          ? 'M21.752 15.002A9.718 9.718 0 0112 21.75 \
+             9.75 9.75 0 1117.003 2.248a7.501 7.501 0 004.749 12.754z' // moon
+          : 'M12 3v1m0 16v1m8.66-10H20m-16 0H3m15.364 6.364l-.707.707\
+             M6.343 6.343l-.707.707m12.728 0l.707.707\
+             M6.343 17.657l.707.707M12 5a7 7 0 100 14 7 7 0 000-14z'); // sun
+      }
+      
+  </script>
+</body>
+</html>

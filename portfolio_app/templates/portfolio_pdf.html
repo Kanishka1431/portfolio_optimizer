@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 14px; }
+        h2 { border-bottom: 1px solid #333; padding-bottom: 4px; }
+        ul { padding-left: 20px; }
+        img.chart { width: 100%; max-width: 600px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h2>Optimized Portfolio Report</h2>
+    <p><strong>Estimated Annual Return:</strong> {{ result.expected_return }}</p>
+    <p><strong>Volatility:</strong> {{ result.volatility }}</p>
+    <p><strong>Sharpe Ratio:</strong> {{ result.sharpe_ratio }}</p>
+
+    <h3>Investment Allocation</h3>
+    <ul>
+    {% for stock, data in result.weights.items %}
+        <li><strong>{{ stock }}</strong> — {{ data.weight }} | Risk: {{ data.risk }} | Level: {{ data.risk_level }}</li>
+    {% endfor %}
+    </ul>
+
+    <h3>Recommended Investment Allocation</h3>
+    <ul>
+        {% for stock, data in result.weights.items %}
+            <li>
+                <strong>{{ stock }}</strong>: {{ data.weight }}
+                (Risk: {{ data.risk }},
+                Level:
+                <span class="{% if data.risk_level == 'Low' %}low-risk{% elif data.risk_level == 'Medium' %}medium-risk{% else %}high-risk{% endif %}">
+                    {{ data.risk_level }}
+                </span>)
+                <br>
+                <em>{{ data.insight }}</em>
+            </li>
+        {% endfor %}
+    </ul>
+
+    {% if chart_image %}
+        <h3>Stock Price Chart</h3>
+        <img src="{{ chart_image }}" class="chart" />
+    {% endif %}
+</body>
+</html>
